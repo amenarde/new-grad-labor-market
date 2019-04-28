@@ -64,7 +64,15 @@ for (epoch in num.epochs) {
   
   for (week in recruiting.cycle) {
     # some companies appear to recruit this week (ore return)
-      # based on duration and start
+    # based on duration and start
+    for (company in company.chars) {
+      if (company.chars$entry.week == week) {
+        recruiting.df$Status[company] <- 1 #1 corresponds to entered
+        recruiting.df$Remaining.Time[company] <- min(company.chars$duration[company], recruiting.cycle-week+1)
+        recruiting.df$Remaining.Quota[company] <- company.chars$quota[company]
+      }
+    }
+
     
     # students choose which companies to apply to
       # based on industry preference
@@ -74,6 +82,18 @@ for (epoch in num.epochs) {
     
     # accepted students choose to accept/reject offer
       # based on industry preference and remaining weeks left in epoch
+      
+    #companies update their quotas and remaining times, leaving if either is fulfilled
+    for (company in company.chars) {
+      if (recruiting.df$Status[company] == 1) {
+        recruiting.df$Remaining.Time[company] <- recruiting.df$Remaining.Time[company] - 1
+##      recruiting.df$Remaining.Quota[company] <- recruiting.df$Remaining.Quota[company] - () #Subtract accepted students
+        if ((recruiting.df$Remaining.Time[company] == 0) || (recruiting.df$Remaining.Quota[company] == 0)) {
+          recruiting.df$Status[company] <- 2
+        }
+      }
+    }
+      
   }
   
   
