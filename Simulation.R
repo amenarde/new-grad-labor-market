@@ -73,15 +73,33 @@ for (epoch in num.epochs) {
       }
     }
 
-    
     # students choose which companies to apply to
-      # based on industry preference
+    # based on industry preference
+    for (student in num.students) {
+      if(!(4 %in% application.status[student,])) {
+        this.student.preference <- company.appeal.to.student[student,]
+        apply(this.student.preference, 1, sort)
+        iterator <- 1
+        while(recruiting.df$Status[names(this.student.preference)[iterator]] != 1 && application.status[student,names(this.student.preference)[iterator]] != 0 && iterator < num.com) {
+          iterator <- iterator + 1      
+        }
+        if (iterator < num.com) {
+          application.status[student,names(this.student.preference)[iterator]] <- 1
+        }
+      }
+    } 
     
     # companies look at their applied students and choose who to accept
       # based on the students appeal to industry and company quota
     
     # accepted students choose to accept/reject offer
       # based on industry preference and remaining weeks left in epoch
+    for (student in num.students) {
+      if (1 %in% application.status[student,]) {
+        this.student.application <- application.status[student,]
+        ##Continuing code here
+      }
+    }
       
     #companies update their quotas and remaining times, leaving if either is fulfilled
     for (company in company.chars) {
