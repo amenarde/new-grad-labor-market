@@ -40,10 +40,10 @@ company.chars <- data.frame(name = paste(rep("c-", num.com),seq.int(num.com), se
                                        beta = rep(beta.start, num.com),
                                        entry.week = sample(recruiting.cycle, replace = TRUE, size = num.com),
                                        duration = rpois(num.com, 2) + rep(1, num.com),
-                                       quota = rpois(num.com, 4) + rep(1, num.com))
+                                       quota = rpois(num.com, 6) + rep(1, num.com))
 
 
-create.students <- function() {
+create.sim.data <- function() {
   ind.pref.mat <- t(replicate(num.students, rbeta(n = num.industries, shape1 = industry.chars$alpha, shape2 = industry.chars$beta)))
   rownames(ind.pref.mat) <- paste(rep("s-", num.students),seq.int(num.students))
   colnames(ind.pref.mat) <- industry.acronyms
@@ -53,27 +53,47 @@ create.students <- function() {
   rownames(ind.pref.mat) <- paste(rep("s-", num.students),seq.int(num.students))
   colnames(ind.pref.mat) <- industry.acronyms
   
-  student.characteristics <- data.frame(name = paste(rep("s-", num.students),seq.int(num.students), sep=""),
-                                        pref = ind.pref.mat,
-                                        attra = ind.attra.mat)
-  return(student.characteristics)
+  
+                                              
+  student.appeal.to.company <- rnorm(num.students*num.com, 
+                                     # vector of num.com copies of each attractiveness
+                                     mean = rep(c(t(ind.attra.mat)), rep(companies.per.industry)), 
+                                     sd = 0.05)
+  student.appeal.to.company <- matrix(student.appeal.to.company, ncol = num.com)
+  rownames(student.appeal.to.company) <- paste(rep("s-", num.students),seq.int(num.students))
+  colnames(student.appeal.to.company) <- company.chars$name
+  
+  company.appeal.to.student <- c(t(replicate(num.students, rbeta(n = num.com, shape1 = company.chars$alpha, shape2 = company.chars$beta))))
+  company.appeal.to.student <- (company.appeal.to.student + rep(c(t(ind.pref.mat)), rep(companies.per.industry))) / 2
+  company.appeal.to.student <- matrix(company.appeal.to.student, ncol = num.com)
+  
+  application.status <- matrix(rep(0, num.students*num.com), ncol = num.com)
+  
+  recruiting.df <- data.frame(Status = rep(0, num.com),
+                              Remaining.Time = company.chars$duration,
+                              Remaining.Quota = company.chars$quota)
+  
+  return(list(student.appeal.to.company = student.appeal.to.company,
+              company.appeal.to.student = company.appeal.to.student,
+              application.status = application.status,
+              recruiting.df = recruiting.df))
 }
 
 for (epoch in num.epochs) {
-  student.chars <- create.students()
   
   for (week in recruiting.cycle) {
     # some companies appear to recruit this week (ore return)
       # based on duration and start
     
     # students choose which companies to apply to
-      # based on industry preference
+      # based on company
     
     # companies look at their applied students and choose who to accept
-      # based on the students appeal to industry and company quota
+      # based on the students appeal to industry and company (remaining) quota
     
     # accepted students choose to accept/reject offer
       # based on industry preference and remaining weeks left in epoch
+      # is company
   }
   
   
