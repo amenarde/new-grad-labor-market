@@ -97,7 +97,20 @@ for (epoch in num.epochs) {
     for (student in num.students) {
       if (1 %in% application.status[student,]) {
         this.student.application <- application.status[student,]
-        ##Continuing code here
+        applied.company <- names(this.student.application)[apply(this.student.application, 1, function(i) which(i == 1))]
+        this.student.preference <- company.appeal.to.student[student,]
+        apply(this.student.preference, 1, sort)
+        iterator <- 1
+        while(names(this.student.preference)[iterator] != applied.company[1]) {
+          iterator <- iterator + 1      
+        }
+        if(iterator/num.com <= exp(week/2 - 3)) {
+          application.status[value=student,applied.company] <- 4
+          recruiting.df$Remaining.Quota[applied.company] <- recruiting.df$Remaining.Quota[applied.company] - 1 
+        }
+        else {
+          application.status[value=student,applied.company] <- 3
+        }
       }
     }
       
