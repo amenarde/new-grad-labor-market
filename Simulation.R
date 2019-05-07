@@ -84,7 +84,7 @@ create.sim.data <- function() {
               recruiting.df = recruiting.df))
 }
 
-for (epoch in num.epochs) {
+for (epoch in 1:num.epochs) {
   
   sim.data <- create.sim.data()
   student.appeal.to.company = sim.data$student.appeal.to.company
@@ -93,10 +93,10 @@ for (epoch in num.epochs) {
   recruiting.df = sim.data$recruiting.df
   
   
-  for (week in recruiting.cycle) {
+  for (week in 1:recruiting.cycle) {
     # some companies appear to recruit this week (ore return)
     # based on duration and start
-    for (company in num.com) {
+    for (company in 1:num.com) {
       if (company.chars[company,]$entry.week == week) {
         recruiting.df$Status[company] <- 1 #1 corresponds to entered
         recruiting.df$Remaining.Time[company] <- min(company.chars$duration[company], recruiting.cycle-week+1)
@@ -104,13 +104,13 @@ for (epoch in num.epochs) {
       }
     }
 
-    # based on industry preference
-    for (student in num.students) {
+    # students apply to companies based on industry preference
+    for (student in 1:num.students) {
       if(!(4 %in% application.status[student,])) {
         this.student.preference <- company.appeal.to.student[student,]
-        sort(this.student.preference, decreasing = TRUE)
+        this.student.preference <- sort(this.student.preference, decreasing = TRUE)
         iterator <- 1
-        while(recruiting.df$Status[names(this.student.preference)[iterator]] != 1 && application.status[student,names(this.student.preference)[iterator]] != 0 && iterator < num.com) {
+        while(((recruiting.df$Status[which(names(this.student.preference)[iterator] == recruiting.df$Name)] != 1) || (application.status[student,names(this.student.preference)[iterator]] != 0)) && (iterator < num.com)) {
           iterator <- iterator + 1      
         }
         if (iterator < num.com) {
@@ -119,19 +119,46 @@ for (epoch in num.epochs) {
       }
     } 
     
-    for (student in num.students) {
+    #company accepts or rejects applicants
+    for (company in 1:num.com) {
+      if (recruiting.df$Status[company] == 1) {
+        #Look at how many students the company will accept
+        num_to_accept <- min(ceiling(recruiting.df$Remaining.Quota[company] / recruiting.df$Remaining.time[company] * 1.5), recruiting.df$Remaining.Quota[company])
+        this.company.preference <- student.appeal.to.company[,company]
+        this.company.preference <- sort(this.company.preference,decreasing = TRUE)
+        offersGiven <- 0
+        #Give offers to that many
+        for (student in 1:num.students) {
+            if (application.status[names(this.company.preference)[student],company] == 1) {
+              if (offersGiven < num_to_accept) {
+                #Don't reject (give offer to )the top num_to_accept students 
+                offersGiven <- offersGiven + 1
+              }
+              else {
+                #Reject the rest of the applicants
+                application.status[names(this.company.preference)[student],company] <- 2
+              }
+            }
+        }
+        
+      }
+    }
+    
+    #students accept or reject offer
+    for (student in 1:num.students) {
       if (1 %in% application.status[student,]) {
         this.student.application <- application.status[student,]
-        applied.company <- names(this.student.application)[this.student.application[this.student.application == 1]]
+        applied.company <- names(this.student.application)[this.student.application == 1]
         this.student.preference <- company.appeal.to.student[student,]
-        sort(this.student.preference, decreasing = TRUE)
+        this.student.preference <- sort(this.student.preference, decreasing = TRUE)
         iterator <- 1
         while(names(this.student.preference)[iterator] != applied.company[1]) {
           iterator <- iterator + 1      
         }
         if(iterator/num.com <= exp(week/2 - 3)) {
           application.status[value=student,applied.company] <- 4
-          recruiting.df$Remaining.Quota[which(rownames(recruiting.df) == applied.company)] <- recruiting.df$Remaining.Quota[which(rownames(recruiting.df) == applied.company)] - 1 
+          
+          recruiting.df$Remaining.Quota[which(recruiting.df$Name == applied.company)] <- recruiting.df$Remaining.Quota[which(recruiting.df$Name == applied.company)] - 1 
         }
         else {
           application.status[value=student,applied.company] <- 3
@@ -140,7 +167,7 @@ for (epoch in num.epochs) {
     }
       
     #companies update their quotas and remaining times, leaving if either is fulfilled
-    for (company in num.com) {
+    for (company in 1:num.com) {
       if (recruiting.df$Status[company] == 1) {
         recruiting.df$Remaining.Time[company] <- recruiting.df$Remaining.Time[company] - 1
 ##      recruiting.df$Remaining.Quota[company] <- recruiting.df$Remaining.Quota[company] - () #Subtract accepted students
@@ -151,7 +178,28 @@ for (epoch in num.epochs) {
     }
   }
   
+  unemployed <- 0
+  employed <- 0
+  for (student in 1:num.students) {
+    if (4 %in% application.status[student,]) {
+      employed <- employed + 1
+    }
+    else {
+      unemployed <- unemployed + 1
+    }
+  }
   
+  total_spots_available <- 0
+  total_spots_taken <- 0
+  total_spots_remaining <- 0
+  for (company in 1:num.com) {
+    total_spots_available <- total_spots_available + company.chars$quota[company]
+    total_spots_taken <- total_spots_taken + company.chars$quota[company] - recruiting.df$Remaining.Quota[company]
+    total_spots_remaining <- total_spots_remaining + recruiting.df$Remaining.Quota[company]
+  }
+  
+  company.chars[recruiting.df$Remaining.Quota > 0,]
+  recruiting.df[recruiting.df$Remaining.Quota > 0,]
   # here gather statistics regarding performance of recuriting cycle, report / use to update
   # here update rule should be implemented -- update companies/industries based on performance
 }
