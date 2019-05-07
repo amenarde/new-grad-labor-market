@@ -24,7 +24,7 @@ industry.acronyms <- c("Nat", "Hos", "Ins", "Otr", "Rec", "Gov", "Ret", "Leg", "
 
 set.seed(04282019)
 recruiting.cycle <- 6 # weeks (default: 6)
-num.epochs <- 100 # (default: 40)
+num.epochs <- 10 # (default: 40)
 companies.per.industry <- 5 # (default: 5)
 num.com <- num.industries*companies.per.industry
 alpha.start <- 3 # (default: 3)
@@ -222,10 +222,6 @@ for (epoch in 1:num.epochs) {
   company.chars[recruiting.df$Remaining.Quota > 0,]
   recruiting.df[recruiting.df$Remaining.Quota > 0,]
   
-<<<<<<< HEAD
-  # here gather statistics regarding performance of recuriting cycle, report / use to update
-  # here update rule should be implemented -- update companies/industries based on performance
-=======
   # Company Update Rule
   
   # Less offers per spot is better
@@ -296,7 +292,6 @@ for (epoch in 1:num.epochs) {
   
   simulation.results$mean.student.utility[epoch] <- total.student.utility / num.students
   simulation.results$mean.employed.student.utility[epoch] <- total.student.utility / employed
-  
->>>>>>> e2a0b42d3a3d841248211f2858e76c15d465d0f1
+
 }
 
