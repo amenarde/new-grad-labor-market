@@ -22,13 +22,17 @@ industry.names <- c(
 industry.acronyms <- c("Nat", "Hos", "Ins", "Otr", "Rec", "Gov", "Ret", "Leg", "Man", "Non", "Com", "Hea", "Edu", "Tec", "Con", "Fin")
 
 set.seed(04282019)
-recruiting.cycle <- 6 # weeks
-num.epochs <- 10
-companies.per.industry <- 5
+recruiting.cycle <- 6 # weeks (default: 6)
+num.epochs <- 100 # (default: 40)
+companies.per.industry <- 10 # (default: 5)
 num.com <- num.industries*companies.per.industry
-alpha.start <- 3
-beta.start <- 3
-num.students <- 500
+alpha.start <- 3 # (default: 3)
+beta.start <- 3 # (default: 3)
+num.students <- 500 # (default: 500)
+duration.mean.less.one <- 2 # (default: 2) (mean is 3)
+quota.mean.less.one <- 3 # (default: 6) (mean is 7)
+minimum.company.alpha <- 0.2 # (default: 0.2)
+minimum.industry.alpha <- 1 # (default: 1)
 
 # Set initials
 industry.chars <- data.frame(IND = industry.acronyms, 
@@ -39,8 +43,8 @@ company.chars <- data.frame(name = paste(rep("c-", num.com),seq.int(num.com), se
                                        alpha = rep(alpha.start, num.com),
                                        beta = rep(beta.start, num.com),
                                        entry.week = sample(recruiting.cycle, replace = TRUE, size = num.com),
-                                       duration = rpois(num.com, 2) + rep(1, num.com),
-                                       quota = rpois(num.com, 6) + rep(1, num.com))
+                                       duration = rpois(num.com, duration.mean.less.one) + rep(1, num.com),
+                                       quota = rpois(num.com, quota.mean.less.one) + rep(1, num.com))
 
 
 create.sim.data <- function() {
@@ -83,6 +87,18 @@ create.sim.data <- function() {
               application.status = application.status,
               recruiting.df = recruiting.df))
 }
+
+simulation.results = list()
+simulation.results$company.performance <- matrix(rep(NA, num.com*num.epochs), ncol = num.epochs)
+simulation.results$company.performance.mean <- rep(NA, num.epochs)
+simulation.results$company.performance.normalized <- matrix(rep(NA, num.com*num.epochs), ncol = num.epochs)
+simulation.results$company.performance.spread <- rep(NA, num.epochs)
+simulation.results$company.performance.ranks <- matrix(rep(NA, num.com*num.epochs), ncol = num.epochs)
+simulation.results$company.performance.sd <- rep(NA, num.epochs)
+simulation.results$unemployment <- rep(NA, num.epochs)
+simulation.results$student.utility <- rep(NA, num.epochs)
+simulation.results$industry.performance <- matrix(rep(NA, num.industries*num.epochs), ncol = num.epochs)
+simulation.results$employed.student.utility <- rep(NA, num.epochs)
 
 for (epoch in 1:num.epochs) {
   
@@ -178,6 +194,8 @@ for (epoch in 1:num.epochs) {
     }
   }
   
+  # Gather statistics
+  
   unemployed <- 0
   employed <- 0
   for (student in 1:num.students) {
@@ -198,13 +216,80 @@ for (epoch in 1:num.epochs) {
     total_spots_remaining <- total_spots_remaining + recruiting.df$Remaining.Quota[company]
   }
   
+  simulation.results$unemployment[epoch] <- unemployed / num.students
+  
   company.chars[recruiting.df$Remaining.Quota > 0,]
   recruiting.df[recruiting.df$Remaining.Quota > 0,]
-  # here gather statistics regarding performance of recuriting cycle, report / use to update
-  # here update rule should be implemented -- update companies/industries based on performance
+  
+  # Company Update Rule
+  
+  # Less offers per spot is better
+  offers.per.spot <- rep(NA, num.com)
+  for (i in 1:num.com) {
+    offers.per.spot[i] <- (sum(application.status[,i] == 3) + sum(application.status[,i] == 4))
+  }
+  offers.per.spot <- offers.per.spot / (company.chars$quota - recruiting.df$Remaining.Quota)
+  
+  # Higher percent filled is better
+  percent.filled <- (company.chars$quota - recruiting.df$Remaining.Quota) / company.chars$quota
+  
+  # application.status.df <- data.frame(application.status, row.names = rownames(student.appeal.to.company))
+  
+  # Higher Avg. Quality of Students is Better
+  quality.of.students <- rep(NA, num.com)
+  for (i in 1:num.com) {
+    temp <- application.status[,i] == 4
+    hired <- names(temp[temp != FALSE])
+    quality.of.students[i] <- sum(student.appeal.to.company[names(temp[temp != FALSE]),i]) / length(hired)
+  }
+  
+ # We create a score for each company:
+ # (Avg. Quality)*Percent Filled / Offers per spot
+  company.scores <- quality.of.students * percent.filled / offers.per.spot
+  names(company.scores) <- company.chars$name
+  company.scores[is.nan(company.scores)] <- 0
+  company.adj.scores <- company.scores - mean(company.scores) # parameter
+  
+  simulation.results$company.performance[,epoch] <- company.scores
+  simulation.results$company.performance.mean[epoch] <- mean(company.scores)
+  simulation.results$company.performance.normalized[,epoch] <- simulation.results$company.performance[,epoch] / simulation.results$company.performance.mean[epoch]
+  simulation.results$company.performance.spread[epoch] <- max(company.scores) - min(company.scores)
+  simulation.results$company.performance.sd[epoch] <- sd(company.scores)
+  
+  # Now we adjust the alphas of each company
+  company.chars$alpha <- company.chars$alpha + company.adj.scores
+  company.chars$alpha[company.chars$alpha < minimum.company.alpha] <- minimum.company.alpha # Keep bad performing companies alive
+  
+  sorted.company.scores <- sort(company.scores, decreasing = TRUE)
+  for (i in 1:num.com) {
+    name <- company.chars$name[i]
+    simulation.results$company.performance.ranks[i, epoch] <- which(names(sorted.company.scores) == name)
+  }
+  
+  # We aggregate company scores in each industry to adjust the industry score
+  # and adjust industry alphas by them
+  for (i in 1:num.industries) {
+    companies.in.industry <- company.chars$name[company.chars$IND == industry.acronyms[i]]
+    simulation.results$industry.performance[i,epoch] <- mean(company.scores[companies.in.industry])
+  }
+  adj.indust.perf <- simulation.results$industry.performance[,epoch] - mean(simulation.results$industry.performance[,epoch])
+  industry.chars$alpha <- industry.chars$alpha + adj.indust.perf
+  industry.chars$alpha[industry.chars$alpha < minimum.industry.alpha] <- minimum.industry.alpha
+  
+  # We judge student utility
+  # Higher Avg. Quality of Company is Better
+  total.student.utility <- 0
+  for (i in 1:num.students) {
+    if (4 %in% application.status[i,]) {
+    temp <- application.status[i,] == 4
+    company <- names(temp[temp != FALSE])
+      companies.sorted <- sort(company.appeal.to.student[i,], decreasing = TRUE)
+      multiplier <- 1 - (which(names(companies.sorted) == company)/num.com)
+      total.student.utility <-  total.student.utility + (company.appeal.to.student[i,company]*multiplier) 
+    }
+  }
+  
+  simulation.results$student.utility[epoch] <- total.student.utility
+  
 }
-
-
-
-
 
