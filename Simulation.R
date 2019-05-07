@@ -21,7 +21,7 @@ industry.names <- c(
 )
 industry.acronyms <- c("Nat", "Hos", "Ins", "Otr", "Rec", "Gov", "Ret", "Leg", "Man", "Non", "Com", "Hea", "Edu", "Tec", "Con", "Fin")
 
-set.seed(04282019)
+#set.seed(04282019)
 recruiting.cycle <- 6 # weeks
 num.epochs <- 10
 companies.per.industry <- 5
@@ -200,6 +200,7 @@ for (epoch in 1:num.epochs) {
   
   company.chars[recruiting.df$Remaining.Quota > 0,]
   recruiting.df[recruiting.df$Remaining.Quota > 0,]
+  
   # here gather statistics regarding performance of recuriting cycle, report / use to update
   # here update rule should be implemented -- update companies/industries based on performance
 }
