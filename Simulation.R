@@ -21,17 +21,11 @@ industry.names <- c(
 )
 industry.acronyms <- c("Nat", "Hos", "Ins", "Otr", "Rec", "Gov", "Ret", "Leg", "Man", "Non", "Com", "Hea", "Edu", "Tec", "Con", "Fin")
 
-<<<<<<< HEAD
-#set.seed(04282019)
-recruiting.cycle <- 6 # weeks
-num.epochs <- 10
-companies.per.industry <- 5
-=======
+
 set.seed(04282019)
 recruiting.cycle <- 6 # weeks (default: 6)
 num.epochs <- 100 # (default: 40)
 companies.per.industry <- 10 # (default: 5)
->>>>>>> e2a0b42d3a3d841248211f2858e76c15d465d0f1
 num.com <- num.industries*companies.per.industry
 alpha.start <- 3 # (default: 3)
 beta.start <- 3 # (default: 3)
