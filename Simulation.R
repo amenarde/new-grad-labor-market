@@ -24,13 +24,13 @@ industry.acronyms <- c("Nat", "Hos", "Ins", "Otr", "Rec", "Gov", "Ret", "Leg", "
 set.seed(04282019)
 recruiting.cycle <- 6 # weeks (default: 6)
 num.epochs <- 100 # (default: 40)
-companies.per.industry <- 10 # (default: 5)
+companies.per.industry <- 5 # (default: 5)
 num.com <- num.industries*companies.per.industry
 alpha.start <- 3 # (default: 3)
 beta.start <- 3 # (default: 3)
 num.students <- 500 # (default: 500)
 duration.mean.less.one <- 2 # (default: 2) (mean is 3)
-quota.mean.less.one <- 3 # (default: 6) (mean is 7)
+quota.mean.less.one <-6 # (default: 6) (mean is 7)
 minimum.company.alpha <- 0.2 # (default: 0.2)
 minimum.industry.alpha <- 1 # (default: 1)
 
@@ -96,9 +96,9 @@ simulation.results$company.performance.spread <- rep(NA, num.epochs)
 simulation.results$company.performance.ranks <- matrix(rep(NA, num.com*num.epochs), ncol = num.epochs)
 simulation.results$company.performance.sd <- rep(NA, num.epochs)
 simulation.results$unemployment <- rep(NA, num.epochs)
-simulation.results$student.utility <- rep(NA, num.epochs)
+simulation.results$mean.student.utility <- rep(NA, num.epochs)
 simulation.results$industry.performance <- matrix(rep(NA, num.industries*num.epochs), ncol = num.epochs)
-simulation.results$employed.student.utility <- rep(NA, num.epochs)
+simulation.results$mean.employed.student.utility <- rep(NA, num.epochs)
 
 for (epoch in 1:num.epochs) {
   
@@ -289,7 +289,8 @@ for (epoch in 1:num.epochs) {
     }
   }
   
-  simulation.results$student.utility[epoch] <- total.student.utility
+  simulation.results$mean.student.utility[epoch] <- total.student.utility / num.students
+  simulation.results$mean.employed.student.utility[epoch] <- total.student.utility / employed
   
 }
 
