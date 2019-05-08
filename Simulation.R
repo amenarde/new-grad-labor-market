@@ -1,6 +1,5 @@
 # Constants
 
-num.industries <- 16
 industry.names <- c(
   "Energy/Natural Resources/Utilities",
   "Hospitality/Leisure/Sports",
@@ -22,18 +21,23 @@ industry.names <- c(
 industry.acronyms <- c("Nat", "Hos", "Ins", "Otr", "Rec", "Gov", "Ret", "Leg", "Man", "Non", "Com", "Hea", "Edu", "Tec", "Con", "Fin")
 
 
-set.seed(04282019)
-recruiting.cycle <- 6 # weeks (default: 6)
-num.epochs <- 10 # (default: 40)
-companies.per.industry <- 5 # (default: 5)
+set.seed(05072019)
+
+recruiting.cycle <- 6 # weeks in a cycle
+num.epochs <- 75 # years
+
+num.industries <- 16
+companies.per.industry <- 7 # 80 total companies
+num.students <- 500
+
+duration.mean <- 3 # mean weeks a company recruits
+quota.mean <- 9  # mean students a company wishes to hire
+minimum.company.alpha <- 0.2
+minimum.industry.alpha <- 1
+
 num.com <- num.industries*companies.per.industry
-alpha.start <- 3 # (default: 3)
-beta.start <- 3 # (default: 3)
-num.students <- 500 # (default: 500)
-duration.mean.less.one <- 2 # (default: 2) (mean is 3)
-quota.mean.less.one <-6 # (default: 6) (mean is 7)
-minimum.company.alpha <- 0.2 # (default: 0.2)
-minimum.industry.alpha <- 1 # (default: 1)
+alpha.start <- 3
+beta.start <- 3
 
 # Set initials
 industry.chars <- data.frame(IND = industry.acronyms, 
@@ -44,8 +48,8 @@ company.chars <- data.frame(name = paste(rep("c-", num.com),seq.int(num.com), se
                                        alpha = rep(alpha.start, num.com),
                                        beta = rep(beta.start, num.com),
                                        entry.week = sample(recruiting.cycle, replace = TRUE, size = num.com),
-                                       duration = rpois(num.com, duration.mean.less.one) + rep(1, num.com),
-                                       quota = rpois(num.com, quota.mean.less.one) + rep(1, num.com))
+                                       duration = rpois(num.com, duration.mean - 1) + rep(1, num.com),
+                                       quota = rpois(num.com, quota.mean - 1) + rep(1, num.com))
 
 
 create.sim.data <- function() {

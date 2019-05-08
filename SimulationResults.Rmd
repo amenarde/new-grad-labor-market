@@ -1,0 +1,51 @@
+---
+title: "Results Summary"
+author: "Antonio Menarde"
+date: "5/7/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+plot(simulation.results$company.performance.mean,
+     main="Mean Company Performance over Time",
+     xlab="Epoch (Year)", 
+     ylab="Mean Normalized Performance")
+```
+```{r}
+plot(simulation.results$unemployment,
+     main="Unemployment over Time",
+     xlab="Epoch (Year)", 
+     ylab="Percentage Students Unemployed")
+```
+
+```{r}
+plot(simulation.results$mean.employed.student.utility,
+     main="Mean Utility of Students With Jobs over Time",
+     xlab="Epoch (Year)", 
+     ylab="Mean Utility")
+```
+
+```{r}
+plot(simulation.results$company.performance.sd,
+     main="Standard Deviation of Company Performance over Time",
+     xlab="Epoch (Year)", 
+     ylab="Normalized Standard Deviation of Performance")
+```
+```{r}
+i = 20
+plot(simulation.results$company.performance[i,],
+     main=paste("Performance of", company.chars$name[i], "over Time"),
+     xlab="Epoch (Year)", 
+     ylab="Normalized Performance")
+```
+
+```{r}
+ep = 75
+hist(simulation.results$company.performance[,ep],
+     main=paste("Company Performance in Year", ep),
+     xlab="Normalized Performance")
+```
